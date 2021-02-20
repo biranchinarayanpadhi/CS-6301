@@ -1,4 +1,4 @@
-package Generics.LP1;
+package LP1;
 
 import java.util.*;
 import java.math.*;
@@ -680,7 +680,54 @@ public class Num implements Comparable<Num> {
     // Each string is one of: "*", "+", "-", "/", "%", "^", "0", or
     // a number: [1-9][0-9]*. There is no unary minus operator.
     public static Num evaluatePostfix(String[] expr) {
-        return null;
+        Stack<Num> numStack = new Stack<>();
+        String[] expectedOperators = {"*", "+", "-", "/", "%", "^"};
+        for(int i=0; i<expr.length; i++){
+            if(Arrays.stream(expectedOperators).noneMatch(expr[i]::equals)){
+                Num temp = new Num(expr[i]);
+                numStack.add(temp);
+            }else{
+                Num num2 = numStack.pop();
+                Num num1 = numStack.pop();
+                Num res;
+                switch (expr[i]){
+                    case "*":
+                        res = Num.product(num1, num2);
+                        numStack.add(res);
+                        break;
+
+                    case "+":
+                        res = Num.add(num1, num2);
+                        numStack.add(res);
+                        break;
+
+                    case "-":
+                        res = Num.subtract(num1, num2);
+                        numStack.add(res);
+                        break;
+
+                    case "/":
+                        res = Num.divide(num1, num2);
+                        numStack.add(res);
+                        break;
+
+                    case "%":
+                        res = Num.mod(num1, num2);
+                        numStack.add(res);
+                        break;
+
+                    case "^":
+                        res = Num.power(num1, Long.parseLong(num2.toString()));
+                        numStack.add(res);
+                        break;
+
+                    default:
+                        throw new ArithmeticException("Operator is not defined");
+                }
+            }
+        }
+
+        return numStack.pop();
     }
 
     // Parse/evaluate an expression in infix and return resulting number
@@ -688,18 +735,109 @@ public class Num implements Comparable<Num> {
     // Tokenize the string and then input them to parser
     // Implementing this method correctly earns you an excellence credit
     public static Num evaluateExp(String expr) {
-        return null;
+        /*
+        Assume expression is from the following grammar:
+        E -> T {addop T}*
+        T -> F {multop F}*
+        F -> (E)|num
+        addop -> +|-
+        multop -> *|/
+        num -> digit num|digit
+        digit -> 0|1|2.......|9
+         */
+
+        //Parse the expression tokens in a queue:
+
+        Queue<String> exprQueue = new LinkedList<>();
+        StringBuilder sb = new StringBuilder();
+        String[] expectedOperators = {"*", "+", "-", "/", "(", ")"};
+        expr = expr.trim();
+        for(int i=0; i<expr.length(); i++){
+            if(Arrays.stream(expectedOperators).anyMatch(String.valueOf(expr.charAt(i))::equals)) {
+                if(sb.length() > 0){
+                    exprQueue.add(sb.toString());
+                    sb = new StringBuilder();
+                }
+                exprQueue.add(expr.charAt(i) + "");
+            }
+            else
+                sb.append(expr.charAt(i));
+
+        }
+
+        return evalE(exprQueue);
+
+    }
+
+
+    private static Num evalE(Queue<String> qt){
+        Num val1 = evalT(qt);
+        if(qt.peek() != null){
+            while(qt.peek().equals("+") || qt.peek().equals("-")){
+                String oper = qt.remove();
+                Num val2 = evalT(qt);
+                if(oper.equals("+")){
+                    val1 = Num.add(val1, val2);
+                }else{
+                    val1 = Num.subtract(val1, val2);
+                }
+
+                if(qt.peek() == null)
+                    break;
+            }
+        }
+
+        return val1;
+    }
+
+
+    private static Num evalT(Queue<String> qt){
+        Num val1 = evalF(qt);
+        while(qt.peek().equals("*") || qt.peek().equals("/")){
+            String oper = qt.remove();
+            Num val2 = evalF(qt);
+            if(oper.equals("*")){
+                val1 = Num.product(val1, val2);
+            }else{
+                val1 = Num.divide(val1, val2);
+            }
+
+            if(qt.peek() == null)
+                break;
+        }
+
+        return val1;
+    }
+
+
+    private static Num evalF(Queue<String> qt){
+        Num val = null;
+        if(qt.peek().equals("(")){
+            qt.remove();
+            val = evalE(qt);
+            qt.remove();
+        }else{
+            String num = qt.remove();
+            val = new Num(num);
+        }
+
+        return val;
     }
 
     public static void main(String[] args) {
-        Num x = new Num(4854665465L);
-        Num y = new Num("-14");
-        Num z = Num.squareRoot(y);
-        System.out.println(z + " " + z.isNegative);
+        Num x = new Num("436");
+        Num y = new Num("346");
+
+
+//        Num z = Num.squareRoot(y);
+//        System.out.println(z + " " + z.isNegative);
         // System.out.println(y.compareTo(x));
         // Num a = Num.power(x, 8);
         // System.out.println(a);
-        if (z != null)
-            z.printList();
+//        if (z != null)
+//            z.printList();
+
+        //System.out.println(Num.evaluatePostfix(new String[] { "98765432109876543210987654321",  "5432109876543210987654321", "345678901234567890123456789012", "*", "+", "246801357924680135792468013579", "*", "12345678910111213141516171819202122", "191817161514131211109876543210", "13579", "24680", "*", "-", "*", "+", "7896543", "*", "157984320", "+" }));
+        System.out.println(Num.evaluateExp("(98765432109876543210987654321 + 5432109876543210987654321) * 345678901234567890123456789012"));
     }
 }
