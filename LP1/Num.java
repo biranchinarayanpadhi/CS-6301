@@ -617,7 +617,13 @@ public class Num implements Comparable<Num> {
     // For example, if base=100, and the number stored corresponds to 10965,
     // then the output is "100: 65 9 1"
     public void printList() {
-
+        StringBuilder sb = new StringBuilder();
+        if(isNegative)
+            sb.append("-");
+        for(int i=0;i<this.arr.length;i++){
+            sb.append(arr[i]+" ");
+        }
+        System.out.println(base + ": "+sb.toString());
     }
 
     // Return number to a string in base 10
@@ -638,7 +644,54 @@ public class Num implements Comparable<Num> {
 
     // Return number equal to "this" number, in base=newBase
     public Num convertBase(int newBase) {
-        return null;
+        Num zero = new Num(0);
+        //Num thisNum = new Num((new StringBuilder(toString()).reverse()).toString());
+        Num thisNum = new Num(toString());
+        Num b = new Num(newBase);
+        //int arrSize = (int) Math.ceil((thisNum.len+1)/(Math.log10(newBase)+1));
+        //int arrSize = (int)(Math.floor(Math.log(10965) / Math.log(newBase)) + 1);
+        //long[] newNum = new long[Math.max(arrSize, len)];
+
+        String newNum = "";
+        int i =0;
+
+        //horner's method
+        while(thisNum.compareTo(zero) > 0){
+            newNum += Long.parseLong(mod(thisNum,b).toString()) + ",";
+            thisNum = divide(thisNum,b);
+            i++;
+        }
+        newNum = newNum.substring(0, newNum.length()-1);
+        String[] string_arr = newNum.split(",");
+        long[] res_arr = new long[string_arr.length];
+        for(int j=0; j< res_arr.length; j++){
+            res_arr[j] = Long.parseLong(string_arr[j]);
+        }
+
+
+        //removing trailing zeros
+        int k = res_arr.length -1;
+        while(k>=0 && res_arr[k] == 0)
+            k--;
+        if(k == -1)
+            return new Num(0);
+        if(k == 0)
+            return new Num(res_arr[0]);
+
+//        Collections.reverse(Arrays.asList(res_arr));
+//        //newNum= Arrays.stream(res_arr).toString();
+
+//        for(int p=0, j=res_arr.length-1; p<=j; j--,p++){
+//
+//            long temp = res_arr[p];
+//            res_arr[p]=res_arr[j];
+//            res_arr[j]=temp;
+//
+//        }
+        thisNum.arr = res_arr;
+        thisNum.base = newBase;
+        return thisNum;
+
     }
 
     // Divide by 2, for using in binary search
@@ -759,12 +812,17 @@ public class Num implements Comparable<Num> {
                     sb = new StringBuilder();
                 }
                 exprQueue.add(expr.charAt(i) + "");
+            }else if(expr.charAt(i) == ' '){
+                continue;
             }
             else
                 sb.append(expr.charAt(i));
 
         }
 
+        if(!sb.toString().equals("")){
+            exprQueue.add(sb.toString());
+        }
         return evalE(exprQueue);
 
     }
@@ -793,19 +851,20 @@ public class Num implements Comparable<Num> {
 
     private static Num evalT(Queue<String> qt){
         Num val1 = evalF(qt);
-        while(qt.peek().equals("*") || qt.peek().equals("/")){
-            String oper = qt.remove();
-            Num val2 = evalF(qt);
-            if(oper.equals("*")){
-                val1 = Num.product(val1, val2);
-            }else{
-                val1 = Num.divide(val1, val2);
+        if(qt.peek() != null) {
+            while (qt.peek().equals("*") || qt.peek().equals("/")) {
+                String oper = qt.remove();
+                Num val2 = evalF(qt);
+                if (oper.equals("*")) {
+                    val1 = Num.product(val1, val2);
+                } else {
+                    val1 = Num.divide(val1, val2);
+                }
+
+                if (qt.peek() == null)
+                    break;
             }
-
-            if(qt.peek() == null)
-                break;
         }
-
         return val1;
     }
 
@@ -825,12 +884,14 @@ public class Num implements Comparable<Num> {
     }
 
     public static void main(String[] args) {
-        Num x = new Num("436");
-        Num y = new Num("346");
+//        Num x = new Num("436");
+        Num y = new Num("-1024");
+//        y = y.convertBase(87654321);
+//        y.printList();
 
 
-//        Num z = Num.squareRoot(y);
-//        System.out.println(z + " " + z.isNegative);
+       Num z = Num.squareRoot(y);
+       System.out.println(z + " " + z.isNegative);
         // System.out.println(y.compareTo(x));
         // Num a = Num.power(x, 8);
         // System.out.println(a);
@@ -838,6 +899,8 @@ public class Num implements Comparable<Num> {
 //            z.printList();
 
         //System.out.println(Num.evaluatePostfix(new String[] { "98765432109876543210987654321",  "5432109876543210987654321", "345678901234567890123456789012", "*", "+", "246801357924680135792468013579", "*", "12345678910111213141516171819202122", "191817161514131211109876543210", "13579", "24680", "*", "-", "*", "+", "7896543", "*", "157984320", "+" }));
-        System.out.println(Num.evaluateExp("(98765432109876543210987654321 + 5432109876543210987654321) * 345678901234567890123456789012"));
+//        System.out.println(Num.evaluateExp("(98765432109876543210987654321 + 5432109876543210987654321) * 345678901234567890123456789012"));
+
+       // System.out.println(Num.evaluateExp( "((98765432109876543210987654321 + 5432109876543210987654321 * 345678901234567890123456789012 )* 246801357924680135792468013579 + 12345678910111213141516171819202122 * (191817161514131211109876543210 - 13579 * 24680 )) * 7896543 + 157984320" ));
     }
 }
