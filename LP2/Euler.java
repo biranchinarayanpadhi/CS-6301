@@ -6,7 +6,7 @@
 // change to your netid
 package LP2;
 
-import DFS.java;
+
 import LP2.Graph.Vertex;
 import LP2.Graph.Edge;
 import LP2.Graph.GraphAlgorithm;
@@ -107,8 +107,8 @@ public class Euler extends GraphAlgorithm<Euler.EulerVertex> {
 
     public static void main(String[] args) throws Exception {
         Scanner in;
-        if (args.length > 1) {
-            in = new Scanner(System.in);
+        if (args.length > 0) {
+            in = new Scanner(new File(args[0]));
         } else {
             String input = "9 13 1 2 1 2 3 1 3 1 1 3 4 1 4 5 1 5 6 1 6 3 1 4 7 1 7 8 1 8 4 1 5 7 1 7 9 1 9 5 1";
             in = new Scanner(input);
