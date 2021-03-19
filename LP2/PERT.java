@@ -11,10 +11,11 @@ import LP2.Graph.*;
 import java.io.File;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Scanner;
 
 public class PERT extends GraphAlgorithm<PERT.PERTVertex> {
-    static LinkedList<Vertex> topList;
+    static LinkedList<Vertex> topList = new LinkedList<>();
     static int criticalVerticesCount;
 
     public static class PERTVertex implements Factory {
@@ -40,7 +41,8 @@ public class PERT extends GraphAlgorithm<PERT.PERTVertex> {
     public PERT(Graph g) {
         super(g, new PERTVertex(null));
         initializeStartAndFinishNodes(g);
-        PERT.topList = (LinkedList<Vertex>) DFS.topologicalOrder1(g);
+        List<Vertex> list = DFS.topologicalOrder1(g);
+        PERT.topList.addAll(list);
     }
 
     public void initializeStartAndFinishNodes(Graph g){
