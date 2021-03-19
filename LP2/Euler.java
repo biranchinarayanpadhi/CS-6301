@@ -6,7 +6,7 @@
 // change to your netid
 package LP2;
 
-
+import DFS.java;
 import LP2.Graph.Vertex;
 import LP2.Graph.Edge;
 import LP2.Graph.GraphAlgorithm;
@@ -19,12 +19,14 @@ import java.io.File;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Scanner;
+import java.util.Stack;
 
 public class Euler extends GraphAlgorithm<Euler.EulerVertex> {
     static int VERBOSE = 1;
     Vertex start;
     List<Vertex> tour;
     int INFINITY = Integer.MAX_VALUE;
+    Stack<Vertex> stack;
 
     // You need this if you want to store something at each node
     static class EulerVertex implements Factory {
@@ -92,26 +94,45 @@ public class Euler extends GraphAlgorithm<Euler.EulerVertex> {
 
     public void findEulerTour(Vertex u){
 
-        AdjList adj = g.adj(u.getIndex());
-        for(Edge e:adj.outEdges){
+        stack = new Stack<Vertex>();
+        stack.push(u);
+        while (!stack.isEmpty()){
 
-            if(e.weight != INFINITY){
-                e.weight=INFINITY;
-                findEulerTour(e.to);
+            Vertex top = stack.peek();
+            int flag =0;
+            AdjList adj = g.adj(top.getIndex());
+            for(Edge e:adj.outEdges){
+    
+                if(e.weight != INFINITY){
+                    e.weight=INFINITY;
+                    stack.push(e.to);
+                    flag=1;
+                    break;
+                }
             }
+            if(flag == 1){
+                continue;
+            }
+            else{
+                tour.add(stack.pop());
+            }
+            
         }
-        tour.add(u);
-
+       
     }
 
 
     public static void main(String[] args) throws Exception {
         Scanner in;
+        System.out.println(args.length+"test");
         if (args.length > 0) {
             in = new Scanner(new File(args[0]));
-        } else {
+        }
+         else {
             String input = "9 13 1 2 1 2 3 1 3 1 1 3 4 1 4 5 1 5 6 1 6 3 1 4 7 1 7 8 1 8 4 1 5 7 1 7 9 1 9 5 1";
+            //String input = "4 4  1 2 1  2 3 1  3 4 1  4 1 1";
             in = new Scanner(input);
+            System.out.println(input);
         }
         int start = 1;
         if (args.length > 1) {
