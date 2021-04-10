@@ -6,6 +6,8 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
     private static final boolean RED = true;
     private static final boolean BLACK = false;
     private boolean check = true;
+    private List<Entry<T>> ancestors;
+    private int numberofBlackNode=Integer.MAX_VALUE;
 //    private Entry<T> NULLNODE;  //single NULL node for every leaf
 
     static class Entry<T> extends BinarySearchTree.Entry<T> {
@@ -60,12 +62,40 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
             return false;
 
         //case 3
-
+        ancestors = new List<>();
+        rootToLeafPath((Entry<T>)root,ancestors);
 
 
         //case 4
 
         return true;
+    }
+
+    public void rootToLeafPath(Entry<T> root){
+        if (root != NULLNODE){
+            ancestors.add(root);
+            if(root.left == NULLNODE && root.right == NULLNODE){
+                if(root.color == RED){
+                    check=false;
+                }
+                int count=0;
+                for(int i=0;i<ancestors.size();i+=1){
+                    if(ancestors.get(i).color == BLACK){
+                        count+=1;
+                    }
+                }
+                if(numberofBlackNode == Integer.MAX_VALUE){
+                    numberofBlackNode=count;
+                }else{
+                    if(numberofBlackNode != count){
+                        check=false;
+                    }
+                }
+            }
+            rootToLeafPath(root.left);
+            rootToLeafPath(root.right);
+            ancestors.remove(ancestors.size()-1);
+        }
     }
 
 
