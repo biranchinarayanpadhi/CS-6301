@@ -2,12 +2,11 @@
  */
 package LP3;
 
-import java.util.Comparator;
-
 public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchTree<T> {
     private static final boolean RED = true;
     private static final boolean BLACK = false;
-    private Entry<T> NULLNODE;  //single NULL node for every leaf
+    private boolean check = true;
+//    private Entry<T> NULLNODE;  //single NULL node for every leaf
 
     static class Entry<T> extends BinarySearchTree.Entry<T> {
         boolean color;
@@ -36,8 +35,49 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
     RedBlackTree() {
 	    super();
 	    NULLNODE = new Entry<>(null, null, null);
-	    NULLNODE.setBlack();
-	    root = NULLNODE;
+        ((Entry<T>)NULLNODE).setBlack();
+        root = NULLNODE;
+    }
+
+
+    /**
+     * Verify following properties of RBT:
+     * 1. Root Property: The root is black
+     * 2. Red Property: The parent of a red node is black
+     * 3. Depth Property: The number of black nodes on each path from the root to a leaf node is the same
+     * 4. Leaf Nodes: All leaf nodes are black nil nodes
+     */
+    public boolean verifyRBT(){
+
+        //case 1
+        if(((Entry<T>)root).color != BLACK){
+            return false;
+        }
+
+        //case 2
+        treeTraversal((Entry<T>)root, null);
+        if(!check)
+            return false;
+
+        //case 3
+
+
+
+        //case 4
+
+        return true;
+    }
+
+
+    public void treeTraversal(Entry<T> root,Entry<T> parent){
+        if(root!=NULLNODE){
+            if(root.color == RED && parent.color == RED){
+                check =false;
+            }
+            treeTraversal((Entry<T>) root.left,root);
+            treeTraversal((Entry<T>) root.right,root);
+
+        }
     }
 
 
@@ -49,7 +89,7 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
     public boolean add(T x){
         //case where no element exist in the tree
         if(root == NULLNODE){
-            root = new Entry<>(x, NULLNODE, NULLNODE);
+            root = new Entry<T>(x, (Entry<T>)NULLNODE, (Entry<T>)NULLNODE);
             size = 1;
             ((Entry<T>)root).setBlack();
             return true;
@@ -59,26 +99,47 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
         Entry<T> entryOfElement = (Entry<T>)find(root, x);
 
         //check if element already exists in the tree than no need to add again
-        if(entryOfElement != NULLNODE){
+        if(entryOfElement != null && entryOfElement.element.compareTo(x) == 0){
             return false;
         }
 
+        stack.push(entryOfElement);
         //get the current node
-        Entry<T> currentNode = (Entry<T>)stack.peek();
+//        Entry<T> currentNode = (Entry<T>)stack.peek();
 
+        Entry<T> currentNode = entryOfElement;
         if(currentNode.element.compareTo(x) > 0){  //case for predecessor
             //create right node
-            currentNode.left = new Entry<>(x, NULLNODE, NULLNODE);
+            currentNode.left = new Entry<T>(x, (Entry<T>)NULLNODE, (Entry<T>)NULLNODE);
             //call fix tree method to fix
             fixTree((Entry<T>)currentNode.left);
         }else{ // case for successor
             //create left node
-            currentNode.right = new Entry<>(x, NULLNODE, NULLNODE);
+            currentNode.right = new Entry<T>(x, (Entry<T>)NULLNODE, (Entry<T>)NULLNODE);
             //call fix tree method to fix
             fixTree((Entry<T>)currentNode.right);
         }
 
         size++;
+
+//        super.add(x);
+//
+//        Entry<T> elementEntry = (Entry<T>)find(root, x);
+//
+//        //check if element already exists in the tree than no need to add again
+//        if(elementEntry == null){
+//            return false;
+//        }
+//
+//        //define NULL nodes to left and right for leaf nodes
+//        if(elementEntry.left == null && elementEntry.right == null){
+//            elementEntry.left = NULLNODE;
+//            elementEntry.right = NULLNODE;
+//
+//        }
+//        elementEntry.color = RED;
+//        fixTree(elementEntry);
+
         return true;
     }
 
@@ -179,7 +240,7 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
         Entry<T> newRightChild = (Entry<T>)newParent.left;
 
         newParent.left = entry;
-        entry.right = newRightChild;
+        entry.right = newRightChild;c
 
     }
 
@@ -214,22 +275,147 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
         }
     }
 
+
+
+    /**
+     * Overridden method of BinarySearchTree remove operation
+     * @return
+     */
+    @Override
+    public T remove(T x){
+        Entry<T> entryToBeRemoved = (Entry<T>)find(root, x); //need to store the entry to refer to color after remove operation
+        T removedElement = super.remove(x);
+        if(removedElement == null){
+            return null;
+        }
+
+        Entry<T> current = (Entry<T>)stack.pop();
+
+        if(entryToBeRemoved.color == BLACK){
+            fixUp(current);
+        }
+        return x;
+    }
+
+
+    /**
+     * To fix the tree after deletion
+     * @param current element at which slice operation is done
+     */
+    private void fixUp(Entry<T> current){
+        //return the element if only root is available in the tree
+        if(current == root){
+            current.color = BLACK;
+            return;
+        }
+        Entry<T> parentNode = (Entry<T>)stack.pop();
+        //find whether current node is left child or right child
+        boolean isLeftChild = parentNode.left == current;
+
+        Entry<T> sibling = isLeftChild ? (Entry<T>)parentNode.right : (Entry<T>)parentNode.left;
+
+        if(sibling == null){
+            current.color = RED;
+            return;
+        }
+        while(current != root && current.color != BLACK){
+            if(isLeftChild){
+                if(sibling.color == RED){ //case 1
+                    sibling.color = BLACK;
+                    parentNode.color = RED;
+                    leftRotate(parentNode);
+                    updateParentPointer(sibling, (Entry<T>) stack.peek(), true);
+                    sibling = (Entry<T>)parentNode.right;
+                }
+
+                if(current.color == ((Entry<T>)sibling.left).color == ((Entry<T>)sibling.right).color == BLACK){  //case 2
+                    sibling.color = RED;
+                    current = parentNode;
+                }else if(((Entry<T>)sibling.right).color == BLACK){ //case 3
+                    ((Entry<T>)sibling.left).color = BLACK;
+                    sibling.color = RED;
+                    rightRotate(sibling);
+                    updateParentPointer((Entry<T>)sibling.left, parentNode, false);
+                    sibling = (Entry<T>)sibling.left;
+
+                    //case 4
+
+                    ((Entry<T>)sibling.right).color = BLACK;
+                    sibling.color = parentNode.color;
+                    parentNode.color = BLACK;
+                    leftRotate(parentNode);
+                    updateParentPointer(((Entry<T>)sibling.right), parentNode, true);
+                    current = (Entry<T>)root;
+                }
+
+            }else{
+
+                if(sibling.color == RED){ //case 1
+                    sibling.color = BLACK;
+                    parentNode.color = RED;
+                    rightRotate(parentNode);
+                    updateParentPointer(sibling, (Entry<T>) stack.peek(), false);
+                    sibling = (Entry<T>)parentNode.left;
+                }
+
+                if(current.color == ((Entry<T>)sibling.left).color == ((Entry<T>)sibling.right).color == BLACK){  //case 2
+                    sibling.color = RED;
+                    current = parentNode;
+                }else if(((Entry<T>)sibling.left).color == BLACK){ //case 3
+                    ((Entry<T>)sibling.right).color = BLACK;
+                    sibling.color = RED;
+                    leftRotate(sibling);
+                    updateParentPointer((Entry<T>)sibling.right, parentNode, true);
+                    sibling = (Entry<T>)sibling.right;
+
+                    //case 4
+
+                    ((Entry<T>)sibling.left).color = BLACK;
+                    sibling.color = parentNode.color;
+                    parentNode.color = BLACK;
+                    rightRotate(parentNode);
+                    updateParentPointer(((Entry<T>)sibling.left), parentNode, false);
+                    current = (Entry<T>)root;
+                }
+            }
+        }
+    }
+
+
     public static void main(String[] args){
         RedBlackTree rbt = new RedBlackTree();
-        rbt.add(39);
-        rbt.add(35);
-        rbt.add(70);
-        rbt.add(20);
-        rbt.add(38);
-        rbt.add(30);
-        rbt.add(50);
-        rbt.add(75);
-        rbt.add(40);
-        rbt.add(60);
+//        rbt.add(39);
+//        rbt.add(35);
+//        rbt.add(70);
+//        rbt.add(20);
+//        rbt.add(38);
+//        rbt.add(30);
+//        rbt.add(50);
+//        rbt.add(75);
+//        rbt.add(40);
+//        rbt.add(60);
+//
+//        rbt.add(65);
+//        rbt.add(55);
+//        rbt.add(53);
 
-        rbt.add(65);
-        rbt.add(55);
-        rbt.add(53);
+
+        rbt.add(12);
+        rbt.add(5);
+        rbt.add(15);
+        rbt.add(3);
+        rbt.add(10);
+        rbt.add(13);
+        rbt.add(17);
+        rbt.add(4);
+        rbt.add(7);
+        rbt.add(11);
+        rbt.add(14);
+        rbt.add(6);
+        rbt.add(8);
+
+
+        rbt.remove(20);
     }
 }
 
