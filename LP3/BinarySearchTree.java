@@ -75,9 +75,9 @@ public class BinarySearchTree<T extends Comparable<? super T>> implements Iterab
                 t = t.left;
             } else if (t.element.compareTo(x) == 0)
                 break;
-            else if (t.right == null || t.right == NULLNODE)
-                break;
             else {
+                if (t.right == null || t.right == NULLNODE)
+                    break;
                 stack.push(t);
                 t = t.right;
             }
