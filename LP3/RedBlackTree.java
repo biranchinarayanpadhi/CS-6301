@@ -1,5 +1,9 @@
-/** Starter code for Red-Black Tree
+/**
+ *
+ * @author Tarun Punhani(txp190029), Vishal Puri(vxp190034) and Biranchi Narayan Padhi (bxp200001)
+ * Long Project 3: Skip Lists and RBT
  */
+
 package LP3;
 
 import java.util.ArrayList;
@@ -11,7 +15,6 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
     private boolean check = true;
     private List<Entry<T>> ancestors;
     private int numberofBlackNode=Integer.MAX_VALUE;
-//    private Entry<T> NULLNODE;  //single NULL node for every leaf
 
     static class Entry<T> extends BinarySearchTree.Entry<T> {
         boolean color;
@@ -66,6 +69,7 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
 
         //case 3 & 4
         ancestors = new ArrayList<>();
+        numberofBlackNode = Integer.MAX_VALUE;
         rootToLeafPath((Entry<T>)root);
         if(!check)
             return false;
@@ -78,9 +82,6 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
         if (root != NULLNODE){
             ancestors.add(root);
             if(root.left == NULLNODE && root.right == NULLNODE){
-                if(root.color == RED){
-                    check=false;
-                }
                 int count=0;
                 for(int i=0;i<ancestors.size();i+=1){
                     if(ancestors.get(i).color == BLACK){
@@ -91,6 +92,7 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
                     numberofBlackNode=count;
                 }else{
                     if(numberofBlackNode != count){
+//                        System.out.println("Leaf node: "+root.element);
                         check=false;
                     }
                 }
@@ -137,8 +139,6 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
         }
 
         stack.push(entryOfElement);
-        //get the current node
-//        Entry<T> currentNode = (Entry<T>)stack.peek();
 
         Entry<T> currentNode = entryOfElement;
         if(currentNode.element.compareTo(x) > 0){  //case for predecessor
@@ -146,32 +146,22 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
             currentNode.left = new Entry<T>(x, (Entry<T>)NULLNODE, (Entry<T>)NULLNODE);
             //call fix tree method to fix
             fixTree((Entry<T>)currentNode.left);
+            if(!verifyRBT()){
+                ((Entry<T>) currentNode.left).color = BLACK;
+                check = true;
+            }
         }else{ // case for successor
             //create left node
             currentNode.right = new Entry<T>(x, (Entry<T>)NULLNODE, (Entry<T>)NULLNODE);
             //call fix tree method to fix
             fixTree((Entry<T>)currentNode.right);
+            if(!verifyRBT()){
+                ((Entry<T>) currentNode.right).color = BLACK;
+                check = true;
+            }
         }
 
         size++;
-
-//        super.add(x);
-//
-//        Entry<T> elementEntry = (Entry<T>)find(root, x);
-//
-//        //check if element already exists in the tree than no need to add again
-//        if(elementEntry == null){
-//            return false;
-//        }
-//
-//        //define NULL nodes to left and right for leaf nodes
-//        if(elementEntry.left == null && elementEntry.right == null){
-//            elementEntry.left = NULLNODE;
-//            elementEntry.right = NULLNODE;
-//
-//        }
-//        elementEntry.color = RED;
-//        fixTree(elementEntry);
 
         return true;
     }
@@ -185,12 +175,8 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
 
         //find the parent and grandparent of the entry
         Entry<T> parentNode = stack.isEmpty() ? null : (Entry<T>)stack.pop();
-        Entry<T> grandParentNode = stack.isEmpty() ? null : (Entry<T>) stack.pop();
-
-        //no fix is required if parentNode is BLACK
-        if(parentNode != null && parentNode.color == BLACK){
-            return;
-        }
+        Entry<T> grandParentNode = stack.isEmpty() ? null : (Entry<T>) stack.peek();
+        stack.push(parentNode);
 
         //find uncle of current entry
         Entry<T> uncleNode;
@@ -201,61 +187,156 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
         }
 
 
+        entry.color = RED;
 
         while(entry != root && parentNode != null && parentNode.color != BLACK){
             //conditions for left child parent node
             if(grandParentNode != null && grandParentNode.left == parentNode){
-                if(uncleNode == null || uncleNode.color == RED){  //case 1
-                    parentNode.color = uncleNode.color = BLACK;
+                if(uncleNode.color == RED){  //case 1
+                    uncleNode.color = BLACK;
+                    parentNode.color = BLACK;
                     entry = grandParentNode;
+                    stack.pop();
+                    stack.pop();
+                    parentNode = (Entry<T>) stack.pop();
+                    if(parentNode == null){
+                        root = entry;
+                        break;
+                    }
+                    grandParentNode = (Entry<T>)stack.peek();
+                    stack.push(parentNode);
                     entry.color = RED;
-                }else if(parentNode.right == entry){  //case 2
+                    if(grandParentNode != null){
+                        boolean isUncleLeftChild = grandParentNode.left == parentNode ? true : false;
+
+                        if(isUncleLeftChild){
+                            uncleNode = (Entry<T>) grandParentNode.right;
+                        }else{
+                            uncleNode = (Entry<T>) grandParentNode.left;
+                            continue;
+                        }
+                    }
+                    if(parentNode.color == BLACK){
+                        break;
+                    }
+
+                }else if(parentNode.right == entry) {  //case 2
                     Entry<T> temp = entry;
                     entry = parentNode;
                     leftRotate(entry);
 
                     parentNode = temp;
+                    stack.pop();
+                    stack.push(parentNode);
                     updateParentPointer(parentNode, grandParentNode, true);
+                    if(parentNode.color == BLACK){
+                        break;
+                    }
 
-                    //case 3
+                }
+
+
+                if(grandParentNode != null && parentNode.left == entry && uncleNode.color == BLACK){
                     parentNode.color = BLACK;
                     grandParentNode.color = RED;
+
+                    stack.pop();
+                    stack.pop();
+                    Entry<T> grandgrandParentLeft = stack.peek()!= null ? (Entry<T>)stack.peek().left : null;
                     rightRotate(grandParentNode);
                     entry = parentNode;
-                    updateParentPointer(entry, (Entry<T>)stack.peek(), false);
+
+                    if(grandgrandParentLeft == null){
+                        //no element above parent -> new parent become new root after rotation
+
+                        root = parentNode;
+                    }else{
+                        boolean isLeftParent = grandgrandParentLeft == grandParentNode ? true : false;
+                        if (isLeftParent)
+                            updateParentPointer(entry, (Entry<T>) stack.peek(), true);
+                        else
+                            updateParentPointer(entry, (Entry<T>) stack.peek(), false);
+                    }
                 }
-            }else if (grandParentNode != null && grandParentNode.right == parentNode){
-                if(uncleNode == null || uncleNode.color == RED){  //case 1
-                    parentNode.color = uncleNode.color = BLACK;
+                if(parentNode.color == BLACK){
+                    break;
+                }
+            }else if(grandParentNode != null){
+                if(uncleNode.color == RED){  //case 1
+                    uncleNode.color = BLACK;
+                    parentNode.color = BLACK;
                     entry = grandParentNode;
+                    stack.pop();
+                    stack.pop();
+                    parentNode = (Entry<T>) stack.pop();
+                    if(parentNode == null){
+                        root = entry;
+                        break;
+                    }
+                    grandParentNode = (Entry<T>)stack.peek();
+                    stack.push(parentNode);
                     entry.color = RED;
-                }else if(parentNode.right == entry){  //case 2
+
+                    if(grandParentNode != null){
+                        boolean isUncleRightChild = grandParentNode.right == parentNode ? true : false;
+
+                        if(isUncleRightChild){
+                            uncleNode = (Entry<T>) grandParentNode.left;
+                        }else{
+                            uncleNode = (Entry<T>) grandParentNode.right;
+                            continue;
+                        }
+                    }
+
+                    if(parentNode.color == BLACK){
+                        break;
+                    }
+
+                }else if(parentNode.left == entry) {  //case 2
                     Entry<T> temp = entry;
                     entry = parentNode;
                     rightRotate(entry);
 
                     parentNode = temp;
+                    stack.pop();
+                    stack.push(parentNode);
                     updateParentPointer(parentNode, grandParentNode, false);
 
-                    //case 3
+                    if(parentNode.color == BLACK){
+                        break;
+                    }
+
+                }
+
+                if(grandParentNode != null && parentNode.right == entry && uncleNode.color == BLACK){
                     parentNode.color = BLACK;
                     grandParentNode.color = RED;
+
+                    stack.pop();
+                    stack.pop();
+                    Entry<T> grandgrandParentRight = stack.peek()!= null ? (Entry<T>)stack.peek().right : null;
                     leftRotate(grandParentNode);
                     entry = parentNode;
-                    updateParentPointer(entry, (Entry<T>)stack.peek(), true);
+
+                    if(grandgrandParentRight == null){
+                        //no element above parent -> new parent become new root after rotation
+
+                        root = parentNode;
+                    }else{
+                        boolean isRightParent = grandgrandParentRight == grandParentNode ? false : true;
+                        if (isRightParent)
+                            updateParentPointer(entry, (Entry<T>) stack.peek(), true);
+                        else
+                            updateParentPointer(entry, (Entry<T>) stack.peek(), false);
+                    }
                 }
+
+                if(parentNode.color == BLACK){
+                    break;
+                }
+
             }
 
-
-            //change the values of parent, uncle and grandparent nodes
-            parentNode = stack.isEmpty() ? null : (Entry<T>)stack.pop();
-            grandParentNode = stack.isEmpty() ? null : (Entry<T>)stack.pop();
-
-            if(grandParentNode == null){
-                uncleNode = null;
-            }else{
-                uncleNode = grandParentNode.left == parentNode ? (Entry<T>)grandParentNode.right : (Entry<T>)grandParentNode.left;
-            }
         }
 
         //set the color of root to BLACK
@@ -269,7 +350,7 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
      */
     private void leftRotate(Entry<T> entry){
         Entry<T> newParent = (Entry<T>)entry.right;
-        Entry<T> newRightChild = (Entry<T>)newParent.left;
+        Entry<T> newRightChild = (Entry<T>)(newParent.left);
 
         newParent.left = entry;
         entry.right = newRightChild;
@@ -283,7 +364,7 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
      */
     private void rightRotate(Entry<T> entry){
         Entry<T> newParent = (Entry<T>)entry.left;
-        Entry<T> newLeftChild = (Entry<T>)newParent.right;
+        Entry<T> newLeftChild = (Entry<T>) (newParent.right);
 
         newParent.right = entry;
         entry.left = newLeftChild;
@@ -317,6 +398,7 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
     public T remove(T x){
         T temp = root.element;
         Entry<T> entryToBeRemoved = (Entry<T>)find(root, x); //need to store the entry to refer to color after remove operation
+        boolean entryToBeRemovedColor = entryToBeRemoved.color;
         T removedElement = super.remove(x);
         if(removedElement == null){
             return null;
@@ -328,12 +410,18 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
 
         Entry<T> current = (Entry<T>)stack.pop();
 
-        if(entryToBeRemoved.color == BLACK){
-            if(current.color == BLACK)
-                fixUp(current);
-            else
-                current.color = BLACK;
+
+        if(entryToBeRemovedColor == BLACK)
+            fixUp(current);
+
+        if(entryToBeRemoved.color == RED && current.color == RED){
+            current.color = BLACK;
         }
+
+        if(entryToBeRemoved.isBlack() && current.isRed()){
+            current.setBlack();
+        }
+
         return x;
     }
 
@@ -348,183 +436,203 @@ public class RedBlackTree<T extends Comparable<? super T>> extends BinarySearchT
             current.color = BLACK;
             return;
         }
-        Entry<T> parentNode = (Entry<T>)stack.pop();
+        Entry<T> parentNode = (Entry<T>)stack.peek();
+
+        if(parentNode == null){
+            root = current;
+            current.color = BLACK;
+            return;
+        }
+
         //find whether current node is left child or right child
         boolean isLeftChild = parentNode.left == current;
 
         Entry<T> sibling = isLeftChild ? (Entry<T>)parentNode.right : (Entry<T>)parentNode.left;
 
-        if(sibling == null){
-            current.color = RED;
-            return;
-        }
-        while(current != root && current.color == BLACK){
+        while(current != root && current.color == BLACK && parentNode.color != BLACK && sibling != NULLNODE){
             if(isLeftChild){
                 if(sibling.color == RED){ //case 1
                     sibling.color = BLACK;
                     parentNode.color = RED;
                     leftRotate(parentNode);
-                    updateParentPointer(parentNode, sibling, true);
+                    stack.pop();
+                    if(stack.peek() != null){
+                        boolean isParentLeftChild = stack.peek().left == parentNode;
+                        if(isParentLeftChild)
+                            updateParentPointer(sibling, (Entry<T>)stack.peek(), true);
+                        else
+                            updateParentPointer(sibling, (Entry<T>)stack.peek(), false);
+                    }else{
+                        root = sibling;
+                    }
 
                     //push new parent in stack for tracking
+                    stack.push(parentNode);
                     stack.push(sibling);
 
-
-                    if(root == parentNode)
-                        root = sibling;
                     sibling = (Entry<T>)parentNode.right;
-
-
 
                 }
 
-                if(current.color == BLACK && ((Entry<T>)sibling.left).color == BLACK && ((Entry<T>)sibling.right).color == BLACK){  //case 2
+                if(sibling != NULLNODE && current.color == BLACK && sibling.color == BLACK && ((Entry<T>)sibling.left).color == BLACK && ((Entry<T>)sibling.right).color == BLACK){  //case 2
                     sibling.color = RED;
                     current = parentNode;
-                    parentNode = (Entry<T>)stack.pop();
-                }else if(((Entry<T>)sibling.left).color == RED && ((Entry<T>)sibling.right).color == BLACK){ //case 3
+                    stack.pop();
+                    parentNode = (Entry<T>)stack.peek();
+                    if(parentNode == null){
+                        root = current;
+                        ((Entry<T>)root).color = BLACK;
+                        break;
+                    }else{
+                        if(parentNode.left == current){
+                            sibling = (Entry<T>)parentNode.right;
+                        }else{
+                            sibling = (Entry<T>) parentNode.left;
+                            isLeftChild = false;
+                            continue;
+                        }
+                    }
+
+                }else if(sibling != NULLNODE && sibling.color == BLACK && ((Entry<T>)sibling.left).color == RED && ((Entry<T>)sibling.right).color == BLACK){ //case 3
                     ((Entry<T>)sibling.left).color = BLACK;
                     sibling.color = RED;
                     Entry<T> siblingsLeftChild = (Entry<T>)sibling.left; //find left child before rotation
                     rightRotate(sibling);
+
                     updateParentPointer(siblingsLeftChild, parentNode, false);
                     sibling = siblingsLeftChild;
 
 
                 }
 
-                if(sibling.color == BLACK  && ((Entry<T>)sibling.right).color == RED){
+                if(sibling != NULLNODE && sibling.color == BLACK  && ((Entry<T>)sibling.right).color == RED){
                     //case 4
 
                     ((Entry<T>)sibling.right).color = BLACK;
                     sibling.color = parentNode.color;
                     parentNode.color = BLACK;
-                    Entry<T> siblingsRightChild = (Entry<T>)sibling.right;
                     leftRotate(parentNode);
-
-                    updateParentPointer(parentNode, sibling, true);
-
-                    //update parent for tracking
-//                    stack.push(sibling);
-
-                    if(root == parentNode)
+                    stack.pop();
+                    Entry<T> grandParent = (Entry<T>) stack.peek();
+                    if(grandParent == null){
                         root = sibling;
-                    else{
-                        updateParentPointer(sibling, (Entry<T>)stack.peek(), true);
+                        continue;
+                    }else{
+                        boolean isParentLeftChild = grandParent.left == parentNode;
+                        if(isParentLeftChild){
+                            updateParentPointer(sibling, grandParent, true);
+                        }else{
+                            updateParentPointer(sibling, grandParent, false);
+                        }
                     }
+
+                    current = (Entry<T>)root;
+
                 }
 
-                if(current.color == RED){
-                    current.color = BLACK;
-                }
-                current = (Entry<T>)root;
 
-            }else{
-
+            }else {
                 if(sibling.color == RED){ //case 1
                     sibling.color = BLACK;
                     parentNode.color = RED;
                     rightRotate(parentNode);
-                    updateParentPointer(parentNode, sibling, false);
+                    stack.pop();
+                    if(stack.peek() != null){
+                        boolean isParentRightChild = stack.peek().right == parentNode;
+                        if(isParentRightChild)
+                            updateParentPointer(sibling, (Entry<T>)stack.peek(), false);
+                        else
+                            updateParentPointer(sibling, (Entry<T>)stack.peek(), true);
+                    }else{
+                        root = sibling;
+                    }
+
                     //push new parent in stack for tracking
+                    stack.push(parentNode);
                     stack.push(sibling);
 
-
-                    if(root == parentNode)
-                        root = sibling;
                     sibling = (Entry<T>)parentNode.left;
+
                 }
 
-                if(current.color == BLACK && ((Entry<T>)sibling.left).color == BLACK && ((Entry<T>)sibling.right).color == BLACK){  //case 2
+                if(sibling != NULLNODE && current.color == BLACK && sibling.color == BLACK && ((Entry<T>)sibling.left).color == BLACK && ((Entry<T>)sibling.right).color == BLACK){  //case 2
                     sibling.color = RED;
                     current = parentNode;
-                    parentNode = (Entry<T>)stack.pop();
-                }else if(((Entry<T>)sibling.left).color == BLACK && ((Entry<T>)sibling.right).color == RED){ //case 3
+                    stack.pop();
+                    parentNode = (Entry<T>)stack.peek();
+                    if(parentNode == null){
+                        root = current;
+                        ((Entry<T>)root).color = BLACK;
+                        break;
+                    }else{
+                        if(parentNode.right == current){
+                            sibling = (Entry<T>)parentNode.left;
+                        }else{
+                            sibling = (Entry<T>) parentNode.right;
+                            isLeftChild = true;
+                            continue;
+                        }
+                    }
+
+                }else if(sibling != NULLNODE && sibling.color == BLACK && ((Entry<T>)sibling.left).color == BLACK && ((Entry<T>)sibling.right).color == RED){ //case 3
                     ((Entry<T>)sibling.right).color = BLACK;
                     sibling.color = RED;
                     Entry<T> siblingsRightChild = (Entry<T>)sibling.right; //find left child before rotation
                     leftRotate(sibling);
+
                     updateParentPointer(siblingsRightChild, parentNode, true);
                     sibling = siblingsRightChild;
 
 
-
                 }
 
-                if(sibling.color == BLACK && ((Entry<T>)sibling.left).color == RED){
+                if(sibling != NULLNODE && sibling.color == BLACK  && ((Entry<T>)sibling.left).color == RED){
                     //case 4
 
                     ((Entry<T>)sibling.left).color = BLACK;
                     sibling.color = parentNode.color;
                     parentNode.color = BLACK;
-                    Entry<T> siblingsLeftChild = (Entry<T>)sibling.left;
                     rightRotate(parentNode);
-
-                    updateParentPointer(parentNode, sibling, false);
-
-
-                    if(root == parentNode)
+                    stack.pop();
+                    Entry<T> grandParent = (Entry<T>) stack.peek();
+                    if(grandParent == null){
                         root = sibling;
-                    else{
-                        updateParentPointer(sibling, (Entry<T>)stack.peek(), false);
+                        continue;
+                    }else{
+                        boolean isParentRightChild = grandParent.right == parentNode;
+                        if(isParentRightChild){
+                            updateParentPointer(sibling, grandParent, false);
+                        }else{
+                            updateParentPointer(sibling, grandParent, true);
+                        }
                     }
+
+                    current = (Entry<T>)root;
+
                 }
-                if(current.color == RED){
-                    current.color = BLACK;
-                }
-                current = (Entry<T>)root;
             }
-        }
+            }
     }
 
 
     public static void main(String[] args){
         RedBlackTree rbt = new RedBlackTree();
-//        rbt.add(39);
-//        rbt.add(35);
-//        rbt.add(70);
-//        rbt.add(20);
-//        rbt.add(38);
-//        rbt.add(30);
-//        rbt.add(50);
-//        rbt.add(75);
-//        rbt.add(40);
-//        rbt.add(60);
-//
-//        rbt.add(65);
-//        rbt.add(55);
-//        rbt.add(53);
-
-
-        rbt.add(55);
-
-        rbt.add(40);
-        rbt.add(65);
-        rbt.add(60);
+        rbt.add(39);
+        rbt.add(35);
+        rbt.add(70);
+        rbt.add(20);
+        rbt.add(38);
+        rbt.add(30);
+        rbt.add(50);
         rbt.add(75);
-        rbt.add(57);
-//        rbt.add(50);
-//        rbt.add(75);
-//        rbt.add(57);
+        rbt.add(40);
+        rbt.add(60);
 
+        rbt.add(65);
+        rbt.add(55);
+        rbt.add(53);
 
-//        rbt.add(12);
-//        rbt.add(5);
-//        rbt.add(15);
-//        rbt.add(3);
-//        rbt.add(10);
-//        rbt.add(13);
-//        rbt.add(17);
-//        rbt.add(4);
-//        rbt.add(7);
-//        rbt.add(11);
-//        rbt.add(14);
-//        rbt.add(6);
-//        rbt.add(8);
-
-
-
-        rbt.remove(40);
+        rbt.remove(20);
     }
 }
 

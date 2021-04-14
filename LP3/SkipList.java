@@ -1,7 +1,11 @@
-/* Starter code for LP3 */
+/**
+ *
+ * @author Tarun Punhani(txp190029), Vishal Puri(vxp190034) and Biranchi Narayan Padhi (bxp200001)
+ * Long Project 3: Skip Lists and RBT
+ */
 
 // Change this to netid of any member of team
-package vxp190034;
+package LP3;
 
 import java.util.Arrays;
 import java.util.Iterator;
