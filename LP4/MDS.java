@@ -1,10 +1,3 @@
-/**
- * Starter code for MDS
- *
- * @author rbk
- */
-
-// Change to your net id
 package LP4;
 
 import java.io.File;
@@ -207,24 +200,24 @@ public class MDS {
      * Returns the sum of the net increases of the prices.
      */
     public Money priceHike(long l, long h, double rate) {
-        Map<Long, Product> sub = items.subMap(l,h);
-        Money netSum = new Money(0,0);
-        for(Map.Entry<Long, Product> entry : sub.entrySet()) {
+        Map<Long, Product> sub = items.subMap(l, h);
+        Money netSum = new Money(0, 0);
+        for (Map.Entry<Long, Product> entry : sub.entrySet()) {
             long key = entry.getKey();
             Product product = entry.getValue();
             long d = product.price.dollars();
             int c = product.price.cents();
-            double oldPrice = (double)d+(double)c/100;
-            double newPrice = ((double)d+(double)c/100)+((double)d+(double)c/100)*(rate/100);
+            double oldPrice = (double) d + (double) c / 100;
+            double newPrice = ((double) d + (double) c / 100) + ((double) d + (double) c / 100) * (rate / 100);
             String doubleAsString = String.valueOf(newPrice);
             int indexOfDecimal = doubleAsString.indexOf(".");
             System.out.println("Double Number: " + newPrice);
             System.out.println("Integer Part: " + doubleAsString.substring(0, indexOfDecimal));
-            System.out.println("Decimal Part: " + doubleAsString.substring(indexOfDecimal,2));
+            System.out.println("Decimal Part: " + doubleAsString.substring(indexOfDecimal, 2));
             product.price.d = Integer.parseInt(doubleAsString.substring(0, indexOfDecimal));
-            product.price.c = (int) (newPrice-product.price.d)*100;
-            //calculate net sum here
-            //System.out.println(key + " => " + product);
+            product.price.c = (int) (newPrice - product.price.d) * 100;
+            // calculate net sum here
+            // System.out.println(key + " => " + product);
         }
         return new Money();
     }
@@ -236,13 +229,13 @@ public class MDS {
      * description of id. Return 0 if there is no such id.
      */
     public long removeNames(long id, java.util.List<Long> list) {
-        if(!items.containsKey(id))
+        if (!items.containsKey(id))
             return 0;
         Product product = items.get(id);
-        long sum=0;
-        for(int i=0; i<list.size(); i++){
-            if(product.description.contains(list.get(i)){
-                sum+=list.get(i);
+        long sum = 0;
+        for (int i = 0; i < list.size(); i++) {
+            if (product.description.contains(list.get(i))) {
+                sum += list.get(i);
                 int index = product.description.indexOf(list.get(i));
                 product.description.remove(index);
             }
@@ -329,7 +322,7 @@ public class MDS {
         }
     }
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String args[]) throws FileNotFoundException {
         Scanner sc;
         if (args.length > 0) {
             File file = new File(args[0]);
@@ -337,101 +330,85 @@ public class MDS {
         } else {
             sc = new Scanner(System.in);
         }
+        // input = new BufferedReader(new FileReader(new File(finaName)));
         String operation = "";
         long operand = 0;
         int modValue = 999983;
         long result = 0;
-        Long returnValue = null;
-
         MDS mds = new MDS();
-        // Initialize the timer
-        //Timer timer = new Timer();
-
-        while (!((operation = sc.next()).equals("End"))) {
-            //System.out.println(operation);
+        String line = null;
+        while ((line = sc.nextLine()) != null) {
+            if (line.trim().contains("End")) {
+                break;
+            }
+            if (line.trim().indexOf('#') == 0)
+                continue;
+            String[] words = line.split(" ");
+            operation = words[0];
+            // printing the input
+            for (int i = 0; i < words.length; i++) {
+                System.out.print(words[i] + " ");
+            }
+            System.out.println();
             switch (operation) {
-
-                case "Add": {
-                    operand = sc.nextLong();
-                    boolean temp = skipList.add(operand);
-                    if (temp) {
-                        result = (result + 1) % modValue;
-                    }
-                    break;
+            case "Insert": {
+                long id = Long.parseLong(words[1]);
+                Money money = new Money(words[2]);
+                List<Long> desc_list = new ArrayList<>();
+                for (int i = 3; i < words.length; i++) {
+                    desc_list.add(Long.parseLong(words[i]));
                 }
-                case "Ceiling": {
-                    operand = sc.nextLong();
-
-                    returnValue = skipList.ceiling(operand);
-                    if (returnValue != null) {
-                        result = (result + returnValue) % modValue;
-                    }
-                    break;
+                int temp = mds.insert(id, money, desc_list);
+                result = (result + 1) % modValue;
+                break;
+            }
+            case "Find": {
+                long id = Long.parseLong(words[1]);
+                Money res = mds.find(id);
+                break;
+            }
+            case "Delete": {
+                long id = Long.parseLong(words[1]);
+                long res = mds.delete(id);
+                break;
+            }
+            case "FindMinPrice": {
+                long id = Long.parseLong(words[1]);
+                Money res = mds.findMinPrice(id);
+                break;
+            }
+            case "FindMaxPrice": {
+                long id = Long.parseLong(words[1]);
+                Money res = mds.findMaxPrice(id);
+                break;
+            }
+            case "FindPriceRange": {
+                long n = Long.parseLong(words[1]);
+                Money low = new Money(words[2]);
+                Money high = new Money(words[3]);
+                int res = mds.findPriceRange(n, low, high);
+                break;
+            }
+            case "PriceHike": {
+                long l = Long.parseLong(words[1]);
+                long h = Long.parseLong(words[2]);
+                double rate = Double.parseDouble(words[3]);
+                Money res = mds.priceHike(l, h, rate);
+                break;
+            }
+            case "removeNames": {
+                long id = Long.parseLong(words[1]);
+                List<Long> desc_list = new ArrayList<>();
+                for (int i = 2; i < words.length; i++) {
+                    desc_list.add(Long.parseLong(words[i]));
                 }
-                case "First": {
-                    returnValue = skipList.first();
-                    if (returnValue != null) {
-                        result = (result + returnValue) % modValue;
-                    }
-                    break;
-                }
-                case "Get": {
-                    int intOperand = sc.nextInt();
-                    returnValue = skipList.get(intOperand);
-                    if (returnValue != null) {
-                        result = (result + returnValue) % modValue;
-                    }
-                    break;
-                }
-                case "Last": {
-                    returnValue = skipList.last();
-                    if (returnValue != null) {
-                        result = (result + returnValue) % modValue;
-                    }
-                    break;
-                }
-                case "Floor": {
-                    operand = sc.nextLong();
-                    returnValue = skipList.floor(operand);
-                    if (returnValue != null) {
-                        result = (result + returnValue) % modValue;
-                    }
-                    break;
-                }
-                case "Remove": {
-                    operand = sc.nextLong();
-                    Long temp = skipList.remove(operand);
-                    if (temp!=null) {
-                        result = (result + 1) % modValue;
-         
-                    }
-                    break;
-                }
-                case "Contains": {
-                    operand = sc.nextLong();
-                    boolean temp = skipList.contains(operand);
-                    if (temp) {
-                        result = (result + 1) % modValue;
-                    }
-                    break;
-                }
-                case "IsEmpty": {
-                    boolean temp = skipList.isEmpty();
-                    if (skipList.isEmpty()){
-                        System.out.println("SkipList is empty");
-                    } else
-                        System.out.println("Skiplist has size: "+ skipList.size());
-                    break;
-                }
+                long res = mds.removeNames(id, desc_list);
+                break;
+            }
 
             }
         }
-
-        // End Time
-        //timer.end();
         System.out.println(result);
-        //System.out.println(timer);
     }
-
 
 }
