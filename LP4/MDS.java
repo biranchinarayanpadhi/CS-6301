@@ -1,7 +1,8 @@
-package LP4;
+package vxp190034;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,9 +48,9 @@ public class MDS {
 
         // if this id already exists in items
         else {
-        
+
             if (list.size() != 0) {
-                System.out.println(id+" "+list);
+                //System.out.println(id+" "+list);
                 // as the description list is updated in this case, deleting ids from the list
                 // which is mapped to this id in desc_list
                 List<Long> description = obj.description;
@@ -69,7 +70,7 @@ public class MDS {
         // fetching the object associated with id if it already exists for updating
         // price and desc_list
 
-        if (list.size()!=0){
+        if (list.size() != 0) {
 
             List<Long> description = items.get(id).description;
             if (description != null) {
@@ -126,7 +127,7 @@ public class MDS {
                 sum += desc;
             }
 
-            for(long desc:obj.description){
+            for (long desc : obj.description) {
                 desc_list.get(desc).remove(id);
             }
 
@@ -153,11 +154,10 @@ public class MDS {
                 Money price = items.get(id).price;
                 if (min_price.compareTo(price) > 0) {
                     min_price = price;
-                   // System.out.print(min_price.d);
-                
+
                 }
             }
-            //System.out.println();    
+            //System.out.println();
             return min_price;
         }
         return new Money();
@@ -212,7 +212,7 @@ public class MDS {
      * Returns the sum of the net increases of the prices.
      */
     public Money priceHike(long l, long h, double rate) {
-        Map<Long, Product> sub = items.subMap(l, h+1);
+        Map<Long, Product> sub = items.subMap(l, h + 1);
         double netSum = 0;
         for (Map.Entry<Long, Product> entry : sub.entrySet()) {
             long key = entry.getKey();
@@ -220,45 +220,44 @@ public class MDS {
             long d = product.price.dollars();
             int c = product.price.cents();
             double oldPrice = (double) d + (double) c / 100;
-            double newPrice = ((double) d + (double) c / 100) + ((double) d + (double) c / 100) * (rate / 100);
-            double increase = newPrice - oldPrice;
+            double newPrice = (oldPrice + (oldPrice * (rate / 100)));
 
+            //truncating digits are 2 decimal places
             String doubleAsString = String.valueOf(newPrice);
             String[] temp = doubleAsString.split("\\.");
             String newDollarValue = temp[0];
             String newCentValue = temp[1];
-            if(newCentValue.length()==1)
-                newCentValue+="0";
+            if (newCentValue.length() == 1)
+                newCentValue += "0";
             else
-                newCentValue=newCentValue.substring(0, 2);
-            
+                newCentValue = newCentValue.substring(0, 2);
+
+            //updating the new product price after hike
             product.price.d = Long.parseLong(newDollarValue);
             product.price.c = Integer.parseInt(newCentValue);
-            
+
+            newPrice = Double.parseDouble(product.price.toString());
+            double increase = newPrice - oldPrice;
+
             items.get(key).price = product.price;
 
-            doubleAsString = String.valueOf(increase);
-            temp = doubleAsString.split("\\.");
-            newDollarValue = temp[0];
-            newCentValue = temp[1];
-            if(newCentValue.length()==1)
-                newCentValue+="0";
-            else
-                newCentValue=newCentValue.substring(0, 2);
-            //System.out.println(newDollarValue+" "+newCentValue+" increase::::");
-            netSum+=increase;
+            //calculating the net increase via hike
+            netSum += increase;
         }
-        //System.out.println("netSum:"+netSum);
-        String doubleAsString = String.valueOf(netSum);
-            
+
+        //truncating the net hike to two decimal places
+        String doubleAsString = new BigDecimal(netSum).toPlainString();
         String[] temp = doubleAsString.split("\\.");
-        String dv = temp[0];
-        String cv = temp[1];
-        if(cv.length()==1)
-            cv+="0";
-        else
-            cv=cv.substring(0, 2);
-        return new Money(dv+"."+cv);
+        String cv = "00", dv = "";
+        dv = temp[0];
+        if (temp.length > 1) {
+            cv = temp[1];
+            if (cv.length() == 1)
+                cv += "0";
+            else
+                cv = cv.substring(0, 2);
+        }
+        return new Money(dv + "." + cv);
     }
 
     /*
@@ -268,17 +267,19 @@ public class MDS {
      * description of id. Return 0 if there is no such id.
      */
     public long removeNames(long id, java.util.List<Long> list) {
-        if (!items.containsKey(id))
+        if (!items.containsKey(id)||list.size()==0)
             return 0;
         Product product = items.get(id);
         long sum = 0;
         for (int i = 0; i < list.size(); i++) {
             if (product.description.contains(list.get(i))) {
                 sum += list.get(i);
-                int index = product.description.indexOf(list.get(i));
-                product.description.remove(index);
+                product.description.remove(list.get(i));
+                desc_list.get(list.get(i)).remove(id);
             }
         }
+        items.remove(id);
+        items.put(id, product);
         return sum;
     }
 
@@ -384,100 +385,102 @@ public class MDS {
             }
             if (line.trim().indexOf('#') == 0)
                 continue;
-            line = line.replace("\t","");
+            line = line.replace("\t", "");
             String[] words = line.split(" ");
             operation = words[0];
-            
+//            if(serialNumber==100110)
+//                break;
             switch (operation) {
-            case "Insert": {
-                long id = Long.parseLong(words[1]);
-                Money money = new Money(words[2]);
-                List<Long> desc_list = new ArrayList<>();
-                for (int i = 3; i < words.length-1; i++) {
-                    desc_list.add(Long.parseLong(words[i]));
-                }
-                int temp = mds.insert(id, money, desc_list);
-                result +=temp;
-                serialNumber++;
-                System.out.println(serialNumber+"  "+operation+" "+temp+" "+result);
-                break;
-            }
-            case "Find": {
-                long id = Long.parseLong(words[1]);
-                Money res = mds.find(id);
-                result+=(int)Double.parseDouble(res.toString());
-                serialNumber++;
-                System.out.println(serialNumber+"  "+operation+"  "+(int)Double.parseDouble(res.toString())+"  "+result);
-              
-                break;
-            }
-            case "Delete": {
-                long id = Long.parseLong(words[1]);
-                long res = mds.delete(id);
-                //System.out.println(res+" "+"Delete");
-                
-                result+=res;
-                //System.out.println("result "+result);
-                serialNumber++;
-                System.out.println(serialNumber+"  "+operation+"  "+res+"  "+result);
-              
-                break;
-            }
-            case "FindMinPrice": {
-                long id = Long.parseLong(words[1]);
-                Money res = mds.findMinPrice(id);
-                result+=(int)Double.parseDouble(res.toString());
-                serialNumber++;
-                System.out.println(serialNumber+"  "+operation+"  "+(int)Double.parseDouble(res.toString())+"  "+result);
-              
-                break;
-            }
-            case "FindMaxPrice": {
-                long id = Long.parseLong(words[1]);
-                Money res = mds.findMaxPrice(id);
-                result+=(int)Double.parseDouble(res.toString());
-                serialNumber++;
-                System.out.println(serialNumber+"  "+operation+"  "+(int)Double.parseDouble(res.toString())+"  "+result);
-              
-                break;
-            }
-            case "FindPriceRange": {
-                long n = Long.parseLong(words[1]);
-                Money low = new Money(words[2]);
-                Money high = new Money(words[3]);
-                int res = mds.findPriceRange(n, low, high);
-                result+=res;
 
-                serialNumber++;
-                System.out.println(serialNumber+"  "+operation+"  "+res+"  "+result);
-               
-                break;
-            }
-            case "PriceHike": {
-                long l = Long.parseLong(words[1]);
-                long h = Long.parseLong(words[2]);
-                double rate = Double.parseDouble(words[3]);
-                Money res = mds.priceHike(l, h, rate);
-                result+=(int)Double.parseDouble(res.toString());
-                serialNumber++;
-                System.out.println(serialNumber+"  "+operation+"  "+(int)Double.parseDouble(res.toString())+"  "+result);
-               
-                break;
-            }
-            case "removeNames": {
-                long id = Long.parseLong(words[1]);
-                List<Long> desc_list = new ArrayList<>();
-                for (int i = 2; i < words.length; i++) {
-                    desc_list.add(Long.parseLong(words[i]));
+                case "Insert": {
+                    long id = Long.parseLong(words[1]);
+                    Money money = new Money(words[2]);
+                    List<Long> desc_list = new ArrayList<>();
+                    for (int i = 3; i < words.length - 1; i++) {
+                        desc_list.add(Long.parseLong(words[i]));
+                    }
+                    int temp = mds.insert(id, money, desc_list);
+                    result += temp;
+                    serialNumber++;
+                    System.out.println(serialNumber + "  " + operation + " " + temp + " " + result);
+                    break;
                 }
-                long res = mds.removeNames(id, desc_list);
-                result+=res;
-                
-                serialNumber++;
-                System.out.println(serialNumber+"  "+operation+"  "+res+"  "+result);
-              
-                break;
-            }
+                case "Find": {
+                    long id = Long.parseLong(words[1]);
+                    Money res = mds.find(id);
+                    result += (int) Double.parseDouble(res.toString());
+                    serialNumber++;
+                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
+
+                    break;
+                }
+                case "Delete": {
+                    long id = Long.parseLong(words[1]);
+                    long res = mds.delete(id);
+                    //System.out.println(res+" "+"Delete");
+
+                    result += res;
+                    //System.out.println("result "+result);
+                    serialNumber++;
+                    System.out.println(serialNumber + "  " + operation + " id: " + id + " " + res + "  " + result);
+
+                    break;
+                }
+                case "FindMinPrice": {
+                    long id = Long.parseLong(words[1]);
+                    Money res = mds.findMinPrice(id);
+                    result += (int) Double.parseDouble(res.toString());
+                    serialNumber++;
+                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
+
+                    break;
+                }
+                case "FindMaxPrice": {
+                    long id = Long.parseLong(words[1]);
+                    Money res = mds.findMaxPrice(id);
+                    result += (int) Double.parseDouble(res.toString());
+                    serialNumber++;
+                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
+
+                    break;
+                }
+                case "FindPriceRange": {
+                    long n = Long.parseLong(words[1]);
+                    Money low = new Money(words[2]);
+                    Money high = new Money(words[3]);
+                    int res = mds.findPriceRange(n, low, high);
+                    result += res;
+
+                    serialNumber++;
+                    System.out.println(serialNumber + "  " + operation + "  " + res + "  " + result);
+
+                    break;
+                }
+                case "PriceHike": {
+                    long l = Long.parseLong(words[1]);
+                    long h = Long.parseLong(words[2]);
+                    double rate = Double.parseDouble(words[3]);
+                    Money res = mds.priceHike(l, h, rate);
+                    result += (int) Double.parseDouble(res.toString());
+                    serialNumber++;
+                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
+
+                    break;
+                }
+                case "RemoveNames": {
+                    long id = Long.parseLong(words[1]);
+                    List<Long> desc_list = new ArrayList<>();
+                    for (int i = 2; i < words.length; i++) {
+                        desc_list.add(Long.parseLong(words[i]));
+                    }
+                    long res = mds.removeNames(id, desc_list);
+                    result += res;
+
+                    serialNumber++;
+                    System.out.println(serialNumber + "  " + operation + "  " + res + "  " + result);
+
+                    break;
+                }
 
             }
         }
