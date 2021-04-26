@@ -1,4 +1,10 @@
-package vxp190034;
+/**
+ *
+ * @author Tarun Punhani(txp190029), Vishal Puri(vxp190034) and Biranchi Narayan Padhi (bxp200001)
+ * Long Project 4: Multi-dimensional Search
+ */
+
+package LP4;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -11,12 +17,12 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.TreeMap;
 
-// If you want to create additional classes, place them in this file as subclasses of MDS
+
 
 public class MDS {
-    // Add fields of MDS here
-    TreeMap<Long, Product> items;
-    HashMap<Long, HashSet<Long>> desc_list;
+
+    TreeMap<Long, Product> items; //store a new product with it's id
+    HashMap<Long, HashSet<Long>> desc_list; //link product description id with all the product ids
 
     // Constructors
     public MDS() {
@@ -25,7 +31,7 @@ public class MDS {
         desc_list = new HashMap<>();
     }
 
-    /*
+    /**
      * Public methods of MDS. Do not change their signatures.
      * __________________________________________________________________ a.
      * Insert(id,price,list): insert a new item whose description is given in the
@@ -33,8 +39,10 @@ public class MDS {
      * price are replaced by the new values, unless list is null or empty, in which
      * case, just the price is updated. Returns 1 if the item is new, and 0
      * otherwise.
+     * @param id to store the unique id of the product
+     * @param price for actual price of product
+     * @param list of description id's
      */
-
     public int insert(long id, Money price, java.util.List<Long> list) {
 
         Product obj = items.get(id);
@@ -50,7 +58,6 @@ public class MDS {
         else {
 
             if (list.size() != 0) {
-                //System.out.println(id+" "+list);
                 // as the description list is updated in this case, deleting ids from the list
                 // which is mapped to this id in desc_list
                 List<Long> description = obj.description;
@@ -69,7 +76,6 @@ public class MDS {
 
         // fetching the object associated with id if it already exists for updating
         // price and desc_list
-
         if (list.size() != 0) {
 
             List<Long> description = items.get(id).description;
@@ -77,17 +83,14 @@ public class MDS {
 
                 for (long desc : description) {
 
-                    if (desc_list.get(desc) != null) {
-                        desc_list.get(desc).add(id);
-                    } else {
+                    if (desc_list.get(desc) == null) {
                         desc_list.put(desc, new HashSet<Long>());
-                        desc_list.get(desc).add(id);
                     }
+                    desc_list.get(desc).add(id);
                 }
 
 
             }
-            //System.out.println(desc_list+" insert");
         }
 
         // if flag == 1, new item is added
@@ -100,7 +103,10 @@ public class MDS {
 
     }
 
-    // b. Find(id): return price of item with given id (or 0, if not found).
+    /**
+     * Find(id): return price of item with given id (or 0, if not found)
+     * @param id to find the product
+     */
     public Money find(long id) {
 
         Product obj = items.get(id);
@@ -112,10 +118,11 @@ public class MDS {
         return new Money();
     }
 
-    /*
+    /**
      * c. Delete(id): delete item from storage. Returns the sum of the long ints
      * that are in the description of the item deleted, or 0, if such an id did not
      * exist.
+     * @param id to find the product
      */
     public long delete(long id) {
 
@@ -138,17 +145,17 @@ public class MDS {
         return 0;
     }
 
-    /*
+    /**
      * d. FindMinPrice(n): given a long int, find items whose description contains
      * that number (exact match with one of the long ints in the item's
      * description), and return lowest price of those items. Return 0 if there is no
      * such item.
+     * @param n is the description of product
      */
     public Money findMinPrice(long n) {
 
         HashSet<Long> ids = desc_list.get(n);
         if (ids != null) {
-            //System.out.println(ids+" sexy");
             Money min_price = new Money(Long.MAX_VALUE, Integer.MAX_VALUE);
             for (Long id : ids) {
                 Money price = items.get(id).price;
@@ -157,16 +164,16 @@ public class MDS {
 
                 }
             }
-            //System.out.println();
             return min_price;
         }
         return new Money();
     }
 
-    /*
+    /**
      * e. FindMaxPrice(n): given a long int, find items whose description contains
      * that number, and return highest price of those items. Return 0 if there is no
      * such item.
+     * @param n is the description of product
      */
     public Money findMaxPrice(long n) {
 
@@ -175,8 +182,6 @@ public class MDS {
 
             Money max_price = new Money();
             for (Long id : ids) {
-                //System.out.println(id);
-                //System.out.println(items);
                 Money price = items.get(id).price;
                 if (max_price.compareTo(price) < 0) {
                     max_price = price;
@@ -187,10 +192,13 @@ public class MDS {
         return new Money();
     }
 
-    /*
+    /**
      * f. FindPriceRange(n,low,high): given a long int n, find the number of items
      * whose description contains n, and in addition, their prices fall within the
      * given range, [low, high].
+     * @param n is the description of product
+     * @param low is the lowest price in the range
+     * @param high is the highest price in the range
      */
     public int findPriceRange(long n, Money low, Money high) {
         if (!desc_list.containsKey(n))
@@ -206,23 +214,38 @@ public class MDS {
         return number_of_items;
     }
 
-    /*
+    /**
      * g. PriceHike(l,h,r): increase the price of every product, whose id is in the
      * range [l,h] by r%. Discard any fractional pennies in the new prices of items.
      * Returns the sum of the net increases of the prices.
+     * @param l is the lowest price value
+     * @param h is the highest price value
+     * @param rate is the rate at which price can be hiked
      */
     public Money priceHike(long l, long h, double rate) {
+
+        //fetching all the products which are whose price are within the range of low and high
         Map<Long, Product> sub = items.subMap(l, h + 1);
+
+        //intiitalizing the netsum to zero
         double netSum = 0;
+
+        //fetching the product and it's price in order to  update the new price with old price
         for (Map.Entry<Long, Product> entry : sub.entrySet()) {
             long key = entry.getKey();
+
+            //fetching the price value of each object
             Product product = entry.getValue();
             long d = product.price.dollars();
             int c = product.price.cents();
+
+            //fetching the old price from the Money Object
             double oldPrice = (double) d + (double) c / 100;
+
+            //calculating new price according to rate percentage
             double newPrice = (oldPrice + (oldPrice * (rate / 100)));
 
-            //truncating digits are 2 decimal places
+            //truncating the new price cents, digits up to 2 decimal places
             String doubleAsString = String.valueOf(newPrice);
             String[] temp = doubleAsString.split("\\.");
             String newDollarValue = temp[0];
@@ -239,17 +262,20 @@ public class MDS {
             newPrice = Double.parseDouble(product.price.toString());
             double increase = newPrice - oldPrice;
 
+            //updating the new price in the Product object
             items.get(key).price = product.price;
 
             //calculating the net increase via hike
             netSum += increase;
         }
 
-        //truncating the net hike to two decimal places
+        //truncating the net increase to two decimal places
         String doubleAsString = new BigDecimal(netSum).toPlainString();
         String[] temp = doubleAsString.split("\\.");
         String cv = "00", dv = "";
         dv = temp[0];
+
+        //if the net increase is a double value
         if (temp.length > 1) {
             cv = temp[1];
             if (cv.length() == 1)
@@ -260,15 +286,20 @@ public class MDS {
         return new Money(dv + "." + cv);
     }
 
-    /*
+    /**
      * h. RemoveNames(id, list): Remove elements of list from the description of id.
      * It is possible that some of the items in the list are not in the id's
      * description. Return the sum of the numbers that are actually deleted from the
      * description of id. Return 0 if there is no such id.
+     * @param id is the unique id of the product
+     * @param list is the description list of the product
      */
     public long removeNames(long id, java.util.List<Long> list) {
+
+        //checking for null
         if (!items.containsKey(id)||list.size()==0)
             return 0;
+
         Product product = items.get(id);
         long sum = 0;
         for (int i = 0; i < list.size(); i++) {
@@ -283,6 +314,10 @@ public class MDS {
         return sum;
     }
 
+
+    /**
+     * Product Object to define id, price and desctiption
+     */
     public static class Product {
         long id;
         Money price;
@@ -295,10 +330,12 @@ public class MDS {
         }
     }
 
-    // Do not modify the Money class in a way that breaks LP4Driver.java
+    /**
+     * Money object to identify the price of the product
+     */
     public static class Money implements Comparable<Money> {
-        long d;
-        int c;
+        long d; //d for dollars
+        int c;  //c for cents
 
         public Money() {
             d = 0;
@@ -311,6 +348,7 @@ public class MDS {
         }
 
         public Money(String s) {
+            //calculate dollars and cents from the string
             String[] part = s.split("\\.");
             int len = part.length;
             if (len < 1) {
@@ -328,16 +366,29 @@ public class MDS {
             }
         }
 
+
+        /**
+         * @return dollars in the Money object
+         */
         public long dollars() {
             return d;
         }
 
+        /**
+         * @return cents in the Money object
+         */
         public int cents() {
             return c;
         }
 
-        public int compareTo(Money other) { // Complete this, if needed
 
+        /**
+         * Overridden method of Comparable
+         * @param other Money object which needs to be compared
+         * @return -1, 0 and 1 for less Money, equal Money and greater Money Object respectively
+         */
+        @Override
+        public int compareTo(Money other) {
             if (other.d > this.d) {
                 return -1;
             } else if (other.d < this.d) {
@@ -370,7 +421,6 @@ public class MDS {
         } else {
             sc = new Scanner(System.in);
         }
-        // input = new BufferedReader(new FileReader(new File(finaName)));
         String operation = "";
         long operand = 0;
         int modValue = 999983;
@@ -388,8 +438,6 @@ public class MDS {
             line = line.replace("\t", "");
             String[] words = line.split(" ");
             operation = words[0];
-//            if(serialNumber==100110)
-//                break;
             switch (operation) {
 
                 case "Insert": {
@@ -402,7 +450,7 @@ public class MDS {
                     int temp = mds.insert(id, money, desc_list);
                     result += temp;
                     serialNumber++;
-                    System.out.println(serialNumber + "  " + operation + " " + temp + " " + result);
+//                    System.out.println(serialNumber + "  " + operation + " " + temp + " " + result);
                     break;
                 }
                 case "Find": {
@@ -410,7 +458,7 @@ public class MDS {
                     Money res = mds.find(id);
                     result += (int) Double.parseDouble(res.toString());
                     serialNumber++;
-                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
+//                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
 
                     break;
                 }
@@ -422,7 +470,7 @@ public class MDS {
                     result += res;
                     //System.out.println("result "+result);
                     serialNumber++;
-                    System.out.println(serialNumber + "  " + operation + " id: " + id + " " + res + "  " + result);
+//                    System.out.println(serialNumber + "  " + operation + " id: " + id + " " + res + "  " + result);
 
                     break;
                 }
@@ -431,7 +479,7 @@ public class MDS {
                     Money res = mds.findMinPrice(id);
                     result += (int) Double.parseDouble(res.toString());
                     serialNumber++;
-                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
+//                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
 
                     break;
                 }
@@ -440,7 +488,7 @@ public class MDS {
                     Money res = mds.findMaxPrice(id);
                     result += (int) Double.parseDouble(res.toString());
                     serialNumber++;
-                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
+//                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
 
                     break;
                 }
@@ -452,7 +500,7 @@ public class MDS {
                     result += res;
 
                     serialNumber++;
-                    System.out.println(serialNumber + "  " + operation + "  " + res + "  " + result);
+//                    System.out.println(serialNumber + "  " + operation + "  " + res + "  " + result);
 
                     break;
                 }
@@ -463,7 +511,7 @@ public class MDS {
                     Money res = mds.priceHike(l, h, rate);
                     result += (int) Double.parseDouble(res.toString());
                     serialNumber++;
-                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
+//                    System.out.println(serialNumber + "  " + operation + "  " + (int) Double.parseDouble(res.toString()) + "  " + result);
 
                     break;
                 }
@@ -477,7 +525,7 @@ public class MDS {
                     result += res;
 
                     serialNumber++;
-                    System.out.println(serialNumber + "  " + operation + "  " + res + "  " + result);
+//                    System.out.println(serialNumber + "  " + operation + "  " + res + "  " + result);
 
                     break;
                 }
