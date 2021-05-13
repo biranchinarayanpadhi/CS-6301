@@ -5,10 +5,10 @@ import java.util.Random;
 
 public class RMQDriver {
     public static Random random = new Random();
-    public static int numTrials = 50;
+    public static int numTrials = 1;
     public static void main(String[] args) {
-	int n = 1_000_000_000;;  
-	int choice = 1;
+	int n = 1_0;
+	int choice = 4;
 	int rangeSize = 0;
 	if(args.length > 0) { choice = Integer.parseInt(args[0]); }
 	// specify the range as % of n
@@ -28,18 +28,18 @@ public class RMQDriver {
 	
 	RMQStructure rmqSt = null;
 	switch(choice) {
-	case 0:	
-		rmqSt = new RMQNoPP();
-	    break;
-	case 1:	
-		rmqSt = new RMQFullTable();
-	    break;
-	case 2:
-	    rmqSt = new RMQBlock();
-	    break;
-	case 3:
-	    rmqSt = new RMQSparseTable();
-	    break;
+//	case 0:
+//		rmqSt = new RMQNoPP();
+//	    break;
+//	case 1:
+//		rmqSt = new RMQFullTable();
+//	    break;
+//	case 2:
+//	    rmqSt = new RMQBlock();
+//	    break;
+//	case 3:
+//	    rmqSt = new RMQSparseTable();
+//	    break;
 	case 4:
 	    rmqSt = new RMQHybridOne();
 	    break;
@@ -51,7 +51,7 @@ public class RMQDriver {
 		System.exit(1);
 	}
 	//pre process
-	timer = new Timer();
+	Timer timer = new Timer();
 	timer.start();
 	rmqSt.preProcess(arr); 
 	timer.end();
@@ -65,6 +65,7 @@ public class RMQDriver {
 		
 		begin = random.nextInt(n - rangeSize);
 		int result = rmqSt.query(arr, begin, begin+rangeSize);
+		System.out.println("Result "+result);
 		//verify(arr, begin, begin+rangeSize, result);
 		//System.out.println("minimum between " + begin + " and " + (begin + rangeSize) + "is " + result);
 

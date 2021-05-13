@@ -9,7 +9,7 @@ public class RMQNoPP implements RMQStructure {
 	boolean DEBUG = false;
 
 	public void preProcess(int[] arr) {
-		int b = (int) math.ceil(0.5 * customLog(4, arr.length));
+		int b = (int) Math.ceil(0.5 * customLog(4, arr.length));
 		int min_array[] = new int[arr.length / b];
 
 		// build a min array containing minimum of each block using query function
