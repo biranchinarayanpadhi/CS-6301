@@ -44,19 +44,21 @@ public class RMQHybridOne implements RMQStructure {
         }
 
         // Sparse Table RMQ Sturucture for min_array
-        setSparseTable(buildRMQStructure(min_array, 2));
+        setSparseTable(buildRMQStructure(arr,min_array, 2));
     }
 
 
     private int minBlock(int[] arr, int i, int j){
         int min = arr[i];
         int index = i;
-        for (int k = i; k <= j; k++)
+        int k;
+        for (k = i; k <= j; k++)
             if (min > arr[k])
                 min = arr[k];
+                index=k;
         if (DEBUG)
             System.out.println("min = " + min + " range " + i + " " + j);
-        return min;
+        return index;
     }
 
 
@@ -109,7 +111,7 @@ public class RMQHybridOne implements RMQStructure {
     }
 
 
-    public static int[][] buildRMQStructure(int arr[], int type) {
+    public static int[][] buildRMQStructure(int[] arr,int min_arr[], int type) {
 
         // if type =1, full preprocessing else build psrase table
         if (type == 1) {
@@ -149,7 +151,7 @@ public class RMQHybridOne implements RMQStructure {
         } else {
 
             // building jagged array
-            int n = arr.length;
+            int n = min_arr.length;
             int[][] rmq_struct = new int[n][];
             int j = n;
 
@@ -159,7 +161,7 @@ public class RMQHybridOne implements RMQStructure {
 
             // assigning all the columns with values of the arrays
             for (int i = 0; i < n; i++) {
-                rmq_struct[i][0] = i;
+                rmq_struct[i][0] = min_arr[i];
             }
 
             // we will run this loop upto K everytime where K = log2(N)
