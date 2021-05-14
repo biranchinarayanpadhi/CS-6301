@@ -7,8 +7,8 @@ public class RMQDriver {
     public static Random random = new Random();
     public static int numTrials = 100;
     public static void main(String[] args) {
-	int n = 100000000;
-	int choice = 4;
+	int n = 10000000;
+	int choice = 5;
 	int rangeSize = 0;
 	if(args.length > 0) { choice = Integer.parseInt(args[0]); }
 	// specify the range as % of n
