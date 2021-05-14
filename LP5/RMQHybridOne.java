@@ -51,12 +51,12 @@ public class RMQHybridOne implements RMQStructure {
     private int minBlock(int[] arr, int i, int j){
         int min = arr[i];
         int index = i;
-        int k;
-        for (k = i; k <= j; k++)
+        for (int k = i; k <= j; k++)
             if (min > arr[k])
                 min = arr[k];
-                index=k;
-        return index;
+        if (DEBUG)
+            System.out.println("min = " + min + " range " + i + " " + j);
+        return min;
     }
 
 
