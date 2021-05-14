@@ -5,9 +5,9 @@ import java.util.Random;
 
 public class RMQDriver {
     public static Random random = new Random();
-    public static int numTrials = 1;
+    public static int numTrials = 100;
     public static void main(String[] args) {
-	int n = 1_0;
+	int n = 100000000;
 	int choice = 4;
 	int rangeSize = 0;
 	if(args.length > 0) { choice = Integer.parseInt(args[0]); }
@@ -24,6 +24,9 @@ public class RMQDriver {
 	    arr[i] = n - i;
 	}
 	// shuffle the array
+
+//	int[] arr = new int[]{5, 6, 234, 32, 2, 535, 34646, 23432, 35, 35};
+
 	Shuffle.shuffle(arr);
 	
 	RMQStructure rmqSt = null;
@@ -64,10 +67,11 @@ public class RMQDriver {
 	for (int i = 0; i < numTrials; i++) {
 		
 		begin = random.nextInt(n - rangeSize);
-		int result = rmqSt.query(arr, begin, begin+rangeSize);
+		System.out.println(begin+" "+(begin+rangeSize));
+		int result = rmqSt.query(arr, begin, (begin+rangeSize));
 		System.out.println("Result "+result);
-		//verify(arr, begin, begin+rangeSize, result);
-		//System.out.println("minimum between " + begin + " and " + (begin + rangeSize) + "is " + result);
+		verify(arr, begin, begin+rangeSize, result);
+		System.out.println("minimum between " + begin + " and " + (begin + rangeSize) + "is " + result);
 
 	}
 	timer.end();

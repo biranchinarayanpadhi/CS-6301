@@ -48,16 +48,19 @@ public class RMQHybridOne implements RMQStructure {
     }
 
 
-    private int minBlock(int[] arr, int i, int j){
+    public int minBlock(int[] arr, int i, int j){
         int min = arr[i];
         int index = i;
         int k;
-        for (k = i; k <= j; k++)
-            if (min > arr[k])
+        for (k = i; k <= j; k++) {
+            if (min > arr[k]) {
                 min = arr[k];
-                index=k;
+                index = k;
+            }
+        }
         if (DEBUG)
             System.out.println("min = " + min + " range " + i + " " + j);
+
         return index;
     }
 
@@ -80,7 +83,7 @@ public class RMQHybridOne implements RMQStructure {
     }
 
 
-    private int getMinimumOfBottomTable(int[] arr, int i, int j){
+    public int getMinimumOfBottomTable(int[] arr, int i, int j){
         int bottomTableMinimumIndex = i;
         int firstBlock = (i/getBlockLength())*getBlockLength() + getBlockLength();
         for (int k=i; k < Math.min(firstBlock, j+1); k++) {
@@ -95,7 +98,7 @@ public class RMQHybridOne implements RMQStructure {
     }
 
 
-    private int getTopTableMinimum(int [] arr, int firstBlockIndex, int lastBlockIndex){
+    public int getTopTableMinimum(int [] arr, int firstBlockIndex, int lastBlockIndex){
         int k = (int)customLog(2, (lastBlockIndex - firstBlockIndex +1));
         int topMin = getMinimumIndex(arr, sparseTable[firstBlockIndex][k], sparseTable[lastBlockIndex-(1 << k)+1][k]);
         return topMin;
@@ -152,12 +155,8 @@ public class RMQHybridOne implements RMQStructure {
 
             // building jagged array
             int n = min_arr.length;
-            int[][] rmq_struct = new int[n][];
-            int j = n;
-
-            for (int i = 0; i < n; i++) {
-                rmq_struct[i] = new int[j--];
-            }
+            int k = (int)(Math.log(n) / Math.log(2));
+            int[][] rmq_struct = new int[n][k+1];
 
             // assigning all the columns with values of the arrays
             for (int i = 0; i < n; i++) {
@@ -165,11 +164,11 @@ public class RMQHybridOne implements RMQStructure {
             }
 
             // we will run this loop upto K everytime where K = log2(N)
-            for (j = 1; (1 << j) <= n; j++) {
+            for (int j = 1; j < k+1; j++) {
 
                 // Compute minimum value for all intervals with size 2^j
-                int k = (1 << j) - 1;
-                for (int i = 0; (i + k) < n; i++) {
+                int p= (1 << j) - 1;
+                for (int i = 0; (i + p) < n; i++) {
 
                     if (arr[rmq_struct[i][j - 1]] < arr[rmq_struct[i + (1 << j - 1)][j - 1]]) {
                         rmq_struct[i][j] = rmq_struct[i][j - 1];
